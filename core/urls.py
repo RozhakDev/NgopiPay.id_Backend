@@ -15,4 +15,5 @@ urlpatterns = [
     path('api/v1/', api_root_view, name='api-root'),
 
     path('api/v1/', include('menus.urls')),
+    path('api/v1/', include('orders.urls')),
 ]
