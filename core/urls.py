@@ -13,4 +13,6 @@ def api_root_view(request):
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/', api_root_view, name='api-root'),
+
+    path('api/v1/', include('menus.urls')),
 ]
