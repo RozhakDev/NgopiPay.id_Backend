@@ -8,6 +8,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'default-unsafe-secret-key')
 
+# Paymenku Config
+PAYMENKU_API_KEY = os.getenv('PAYMENKU_API_KEY', '')
+PAYMENKU_BASE_URL = os.getenv('PAYMENKU_BASE_URL', 'https://paymenku.com/api/v1')
+
 # Aplikasi Bawaan Django & Aplikasi Pihak Ketiga
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -21,7 +25,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     
-    # Custom Apps Nongki.id
+    # Custom Apps NgopiPay.id
     'menus',
     'orders',
     'payments',

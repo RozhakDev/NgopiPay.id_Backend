@@ -16,6 +16,8 @@ class Payment(models.Model):
     payment_channel = models.CharField(max_length=50, blank=True, null=True, verbose_name="Metode Pembayaran")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
 
+    pay_url = models.URLField(blank=True, null=True, verbose_name="URL Pembayaran")
+
     paid_at = models.DateTimeField(blank=True, null=True, verbose_name="Waktu Terbayar")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

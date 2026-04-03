@@ -6,7 +6,7 @@ def api_root_view(request):
     """View sederhana untuk memastikan API berjalan (Sanity Check)"""
     return JsonResponse({
         "status": "success",
-        "message": "Selamat datang di API Nongki.id",
+        "message": "Selamat datang di API NgopiPay.id",
         "version": "v1"
     })
 
@@ -16,4 +16,5 @@ urlpatterns = [
 
     path('api/v1/', include('menus.urls')),
     path('api/v1/', include('orders.urls')),
+    path('api/v1/', include('payments.urls')),
 ]

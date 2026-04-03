@@ -1,14 +1,13 @@
 from .base import *
 import os
 
-DEBUG = False
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['nongki.my.id', 'www.nongki.my.id', 'api.nongki.my.id']
+env_prod_hosts = os.getenv('ALLOWED_HOSTS', 'yourdomain.com,www.yourdomain.com')
+ALLOWED_HOSTS = [host.strip() for host in env_prod_hosts.split(',') if host.strip()]
 
-CORS_ALLOWED_ORIGINS = [
-    "https://nongki.my.id",
-    "https://www.nongki.my.id",
-]
+env_prod_cors = os.getenv('CORS_ALLOWED_ORIGINS', 'https://yourdomain.com,https://www.yourdomain.com')
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in env_prod_cors.split(',') if origin.strip()]
 
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True

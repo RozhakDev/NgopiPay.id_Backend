@@ -2,6 +2,8 @@ from rest_framework import serializers
 from django.db import transaction
 from .models import Order, OrderItem
 from menus.models import Menu
+from payments.models import Payment
+from payments.services import PaymenkuService
 from .utils import generate_reference_id
 
 class OrderItemReadSerializer(serializers.ModelSerializer):
@@ -21,7 +23,9 @@ class OrderReadSerializer(serializers.ModelSerializer):
         fields = ['id', 'reference_id', 'customer_name', 'table_number', 'status', 'total_price', 'pay_url', 'items', 'created_at']
 
     def get_pay_url(self, obj):
-        return f"https://paymenku.com/dummy-pay/{obj.reference_id}"
+        if hasattr(obj, 'payment') and obj.payment.pay_url:
+            return obj.payment.pay_url
+        return None
     
 
 class OrderItemCreateSerializer(serializers.Serializer):
@@ -65,6 +69,27 @@ class OrderCreateSerializer(serializers.Serializer):
 
         order.total_price = total_price
         order.save()
+
+        payment_result = PaymenkuService.create_transaction(
+            reference_id=order.reference_id,
+            amount=order.total_price,
+            customer_name=order.customer_name
+        )
+
+        pay_url = None
+        trx_id = None
+        if payment_result.get('success'):
+            pay_url = payment_result.get('pay_url')
+            trx_id = payment_result.get('trx_id')
+
+        Payment.objects.create(
+            order=order,
+            reference_id=order.reference_id,
+            trx_id=trx_id,
+            amount=order.total_price,
+            payment_channel='qris',
+            pay_url=pay_url
+        )
 
         return order
     
