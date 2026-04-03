@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual Environment
+venv/
+.env/
+env/
+
+# Environment Variables
+.env
+
+# Django
+db.sqlite3
+*.log
+staticfiles/
+media/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Testing / Cache
+.pytest_cache/
+coverage/
+
+# Build
+dist/
+build/
+
+# AI Context (custom)
+ai_context/
+docs_ai/
