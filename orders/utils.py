@@ -1,14 +1,14 @@
-import random
 import string
 from datetime import datetime
 from django.core import signing
 from django.utils.crypto import constant_time_compare
+from django.utils.crypto import get_random_string
 
 ORDER_ACCESS_SALT = 'ngopipay.order.access'
 
 def generate_reference_id():
     date_str = datetime.now().strftime('%Y%m%d')
-    random_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
+    random_str = get_random_string(10, allowed_chars=string.ascii_uppercase + string.digits)
     return f"NGOPIPAY-{date_str}-{random_str}"
 
 
