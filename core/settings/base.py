@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     # Third Party Apps
     'rest_framework',
     'corsheaders',
+    'drf_spectacular',
     
     # Custom Apps NgopiPay.id
     'menus',
@@ -95,4 +96,14 @@ REST_FRAMEWORK = {
     'DEFAULT_PARSER_CLASSES': [
         'rest_framework.parsers.JSONParser',
     ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+# Konfigurasi Dokumentasi Swagger
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'NgopiPay.id API',
+    'DESCRIPTION': 'Dokumentasi resmi API untuk sistem pemesanan QRIS NgopiPay.id',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
 }
