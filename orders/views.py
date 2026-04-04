@@ -3,10 +3,31 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Order
 from .serializers import OrderCreateSerializer, OrderReadSerializer
+from .utils import verify_order_access_token
+
+
+class OrderAccessPermission(permissions.BasePermission):
+    message = "Token akses order tidak valid."
+
+    def has_permission(self, request, view):
+        return True
+
+    def has_object_permission(self, request, view, obj):
+        if view.action == 'create':
+            return True
+
+        if view.action not in {'retrieve', 'receipt'}:
+            return True
+
+        token = request.query_params.get('token') or request.headers.get('X-Order-Token')
+        if not token:
+            return False
+
+        return verify_order_access_token(obj, token)
 
 class OrderViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     queryset = Order.objects.all()
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [OrderAccessPermission]
 
     def get_serializer_class(self):
         if self.action == 'create':

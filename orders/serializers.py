@@ -4,7 +4,7 @@ from .models import Order, OrderItem
 from menus.models import Menu
 from payments.models import Payment
 from payments.services import PaymenkuService
-from .utils import generate_reference_id
+from .utils import generate_reference_id, generate_order_access_token
 
 class OrderItemReadSerializer(serializers.ModelSerializer):
     menu_name = serializers.CharField(source='menu.name', read_only=True)
@@ -17,15 +17,19 @@ class OrderItemReadSerializer(serializers.ModelSerializer):
 class OrderReadSerializer(serializers.ModelSerializer):
     items = OrderItemReadSerializer(many=True, read_only=True)
     pay_url = serializers.SerializerMethodField()
+    access_token = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
-        fields = ['id', 'reference_id', 'customer_name', 'table_number', 'status', 'total_price', 'pay_url', 'items', 'created_at']
+        fields = ['id', 'reference_id', 'customer_name', 'table_number', 'status', 'total_price', 'pay_url', 'access_token', 'items', 'created_at']
 
     def get_pay_url(self, obj):
         if hasattr(obj, 'payment') and obj.payment.pay_url:
             return obj.payment.pay_url
         return None
+
+    def get_access_token(self, obj):
+        return generate_order_access_token(obj)
     
 
 class OrderItemCreateSerializer(serializers.Serializer):
