@@ -1,4 +1,5 @@
 from rest_framework import viewsets, permissions
+from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
 from .models import Menu
 from .serializers import MenuSerializer
 
@@ -16,10 +17,11 @@ class StaffWritePermission(permissions.BasePermission):
 class MenuViewSet(viewsets.ModelViewSet):
     serializer_class = MenuSerializer
     permission_classes = [StaffWritePermission]
+    parser_classes = [JSONParser, FormParser, MultiPartParser]
 
     def get_queryset(self):
         user = self.request.user
         if user.is_authenticated and user.is_staff:
-            return Menu.objects.all()
+            return Menu.objects.prefetch_related('images').all()
         
-        return Menu.objects.filter(is_available=True)
+        return Menu.objects.filter(is_available=True).prefetch_related('images')
