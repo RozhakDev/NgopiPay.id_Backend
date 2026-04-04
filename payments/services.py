@@ -56,6 +56,36 @@ class PaymenkuService:
             return {"status": "error", "message": str(e)}
 
     @staticmethod
+    def format_safe_status_response(reference_id, gateway_result):
+        if gateway_result.get('status') != 'success':
+            return {
+                "status": "error",
+                "message": "Gagal mengambil status pembayaran dari gateway.",
+            }
+
+        gateway_data = gateway_result.get('data') or {}
+        payment_channel = gateway_data.get('payment_channel')
+        payment_channel_code = None
+
+        if isinstance(payment_channel, dict):
+            payment_channel_code = payment_channel.get('code') or payment_channel.get('name')
+        elif isinstance(payment_channel, str):
+            payment_channel_code = payment_channel
+
+        return {
+            "status": "success",
+            "data": {
+                "reference_id": gateway_data.get('reference_id') or reference_id,
+                "trx_id": gateway_data.get('trx_id'),
+                "payment_status": gateway_data.get('status'),
+                "payment_channel": payment_channel_code,
+                "paid_at": gateway_data.get('paid_at'),
+                "created_at": gateway_data.get('created_at'),
+                "updated_at": gateway_data.get('updated_at'),
+            }
+        }
+
+    @staticmethod
     def _to_decimal(value):
         if value is None:
             return None

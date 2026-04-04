@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.db import transaction
 from .models import Payment
 from .services import PaymenkuService
+from orders.utils import verify_order_access_token
 
 logger = logging.getLogger(__name__)
 
@@ -89,5 +90,23 @@ class CheckPaymentStatusView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, reference_id, *args, **kwargs):
+        token = request.query_params.get('token') or request.headers.get('X-Order-Token')
+
+        try:
+            payment = Payment.objects.select_related('order').get(reference_id=reference_id)
+        except Payment.DoesNotExist:
+            return Response(
+                {"status": "error", "message": "Reference ID tidak ditemukan"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        if not token or not verify_order_access_token(payment.order, token):
+            return Response(
+                {"status": "error", "message": "Token akses order tidak valid."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         result = PaymenkuService.check_status(reference_id)
-        return Response(result, status=status.HTTP_200_OK)
+        safe_result = PaymenkuService.format_safe_status_response(reference_id, result)
+        http_status = status.HTTP_200_OK if safe_result.get('status') == 'success' else status.HTTP_502_BAD_GATEWAY
+        return Response(safe_result, status=http_status)
