@@ -1,3 +1,4 @@
+import logging
 from rest_framework import serializers
 from django.db import transaction
 from .models import Order, OrderItem
@@ -6,6 +7,8 @@ from payments.models import Payment
 from payments.exceptions import PaymentGatewayError
 from payments.services import PaymenkuService
 from .utils import generate_reference_id, generate_order_access_token
+
+logger = logging.getLogger(__name__)
 
 class OrderItemReadSerializer(serializers.ModelSerializer):
     menu_name = serializers.CharField(source='menu.name', read_only=True)
@@ -48,6 +51,12 @@ class OrderCreateSerializer(serializers.Serializer):
     @transaction.atomic
     def create(self, validated_data):
         items_data = validated_data.pop('items')
+        logger.info(
+            "Memulai pembuatan pesanan. customer_name=%s, table_number=%s, item_count=%s",
+            validated_data['customer_name'],
+            validated_data['table_number'],
+            len(items_data),
+        )
 
         order = Order.objects.create(
             reference_id=generate_reference_id(),
@@ -74,6 +83,11 @@ class OrderCreateSerializer(serializers.Serializer):
 
         order.total_price = total_price
         order.save()
+        logger.info(
+            "Pesanan tersimpan. reference_id=%s, total_price=%s",
+            order.reference_id,
+            order.total_price,
+        )
 
         payment_result = PaymenkuService.create_transaction(
             reference_id=order.reference_id,
@@ -84,6 +98,11 @@ class OrderCreateSerializer(serializers.Serializer):
         pay_url = None
         trx_id = None
         if not payment_result.get('success'):
+            logger.error(
+                "Pembuatan transaksi pembayaran gagal. reference_id=%s, alasan=%s",
+                order.reference_id,
+                payment_result.get('error'),
+            )
             raise PaymentGatewayError(payment_result.get('error'))
 
         pay_url = payment_result.get('pay_url')
@@ -96,6 +115,11 @@ class OrderCreateSerializer(serializers.Serializer):
             amount=order.total_price,
             payment_channel='qris',
             pay_url=pay_url
+        )
+        logger.info(
+            "Data pembayaran berhasil dibuat. reference_id=%s, trx_id=%s",
+            order.reference_id,
+            trx_id,
         )
 
         return order
@@ -112,5 +136,9 @@ class AdminOrderUpdateSerializer(serializers.ModelSerializer):
     def validate_status(self, value):
         allowed_statuses = ['paid', 'cooking', 'done', 'cancelled']
         if value not in allowed_statuses:
+            logger.warning(
+                "Percobaan perubahan status manual ditolak. status=%s",
+                value,
+            )
             raise serializers.ValidationError(f"Status '{value}' tidak diizinkan untuk diubah secara manual.")
         return value

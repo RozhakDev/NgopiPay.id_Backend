@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
+from .logging_config import build_logging_config
 
 load_dotenv()
 
@@ -49,6 +50,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'core.middleware.RequestContextMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -118,3 +120,5 @@ SPECTACULAR_SETTINGS = {
     'SERVE_INCLUDE_SCHEMA': False,
     'COMPONENT_SPLIT_REQUEST': True,
 }
+
+LOGGING = build_logging_config(BASE_DIR)

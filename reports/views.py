@@ -1,3 +1,4 @@
+import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions
@@ -5,6 +6,8 @@ from django.db.models import Sum, Count
 from django.utils import timezone
 from datetime import timedelta
 from orders.models import Order
+
+logger = logging.getLogger(__name__)
 
 class SalesReportView(APIView):
     permission_classes = [permissions.IsAdminUser]
@@ -28,6 +31,13 @@ class SalesReportView(APIView):
         aggregation = valid_orders.aggregate(
             total_revenue=Sum('total_price'),
             total_orders=Count('id')
+        )
+
+        logger.info(
+            "Laporan penjualan berhasil dibuat. period=%s, total_orders=%s, total_revenue=%s",
+            period,
+            aggregation['total_orders'] or 0,
+            aggregation['total_revenue'] or 0,
         )
 
         return Response({

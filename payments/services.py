@@ -19,6 +19,12 @@ class PaymenkuService:
     @classmethod
     def create_transaction(cls, reference_id, amount, customer_name):
         url = f"{cls.BASE_URL}/transaction/create"
+        logger.info(
+            "Memulai pembuatan transaksi pembayaran. reference_id=%s, amount=%s, customer_name=%s",
+            reference_id,
+            amount,
+            customer_name,
+        )
 
         payload = {
             "reference_id": reference_id,
@@ -34,16 +40,28 @@ class PaymenkuService:
             response_data = response.json()
 
             if response.status_code == 200 and response_data.get('status') == 'success':
+                logger.info(
+                    "Transaksi pembayaran berhasil dibuat. reference_id=%s, trx_id=%s",
+                    reference_id,
+                    response_data['data']['trx_id'],
+                )
                 return {
                     "success": True,
                     "trx_id": response_data['data']['trx_id'],
                     "pay_url": response_data['data']['pay_url']
                 }
             else:
-                logger.error(f"Paymenku Error: {response_data}")
+                logger.error(
+                    "Paymenku menolak pembuatan transaksi. reference_id=%s, response=%s",
+                    reference_id,
+                    response_data,
+                )
                 return {"success": False, "error": response_data}
         except requests.exceptions.RequestException as e:
-            logger.error(f"HTTP Request failed: {e}")
+            logger.exception(
+                "Koneksi ke Paymenku gagal saat membuat transaksi. reference_id=%s",
+                reference_id,
+            )
             return {"success": False, "error": str(e)}
     
     @classmethod
@@ -53,6 +71,10 @@ class PaymenkuService:
             response = requests.get(url, headers=cls.get_headers(), timeout=60)
             return response.json()
         except requests.exceptions.RequestException as e:
+            logger.exception(
+                "Koneksi ke Paymenku gagal saat pengecekan status. reference_id=%s",
+                reference_id,
+            )
             return {"status": "error", "message": str(e)}
 
     @staticmethod

@@ -1,9 +1,12 @@
+import logging
 from rest_framework import viewsets, mixins, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Order
 from .serializers import OrderCreateSerializer, OrderReadSerializer
 from .utils import verify_order_access_token
+
+logger = logging.getLogger(__name__)
 
 
 class OrderAccessPermission(permissions.BasePermission):
@@ -21,9 +24,19 @@ class OrderAccessPermission(permissions.BasePermission):
 
         token = request.query_params.get('token') or request.headers.get('X-Order-Token')
         if not token:
+            logger.warning(
+                "Akses order ditolak karena token tidak tersedia. reference_id=%s",
+                getattr(obj, 'reference_id', None),
+            )
             return False
 
-        return verify_order_access_token(obj, token)
+        is_valid = verify_order_access_token(obj, token)
+        if not is_valid:
+            logger.warning(
+                "Akses order ditolak karena token tidak valid. reference_id=%s",
+                getattr(obj, 'reference_id', None),
+            )
+        return is_valid
 
 class OrderViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     queryset = Order.objects.all()
@@ -39,6 +52,10 @@ class OrderViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.
         order = self.get_object()
 
         if order.status == 'pending_payment':
+            logger.info(
+                "Struk diminta sebelum pembayaran selesai. reference_id=%s",
+                order.reference_id,
+            )
             return Response(
                 {"status": "error", "message": "Pesanan belum dibayar, struk tidak tersedia."},
                 status=400
@@ -64,5 +81,10 @@ class OrderViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.
                 "total_paid": order.total_price
             }
         }
+
+        logger.info(
+            "Struk pesanan berhasil disiapkan. reference_id=%s",
+            order.reference_id,
+        )
 
         return Response({"status": "success", "data": receipt_data})
