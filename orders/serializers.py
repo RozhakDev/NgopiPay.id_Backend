@@ -3,6 +3,7 @@ from django.db import transaction
 from .models import Order, OrderItem
 from menus.models import Menu
 from payments.models import Payment
+from payments.exceptions import PaymentGatewayError
 from payments.services import PaymenkuService
 from .utils import generate_reference_id, generate_order_access_token
 
@@ -82,9 +83,11 @@ class OrderCreateSerializer(serializers.Serializer):
 
         pay_url = None
         trx_id = None
-        if payment_result.get('success'):
-            pay_url = payment_result.get('pay_url')
-            trx_id = payment_result.get('trx_id')
+        if not payment_result.get('success'):
+            raise PaymentGatewayError(payment_result.get('error'))
+
+        pay_url = payment_result.get('pay_url')
+        trx_id = payment_result.get('trx_id')
 
         Payment.objects.create(
             order=order,
