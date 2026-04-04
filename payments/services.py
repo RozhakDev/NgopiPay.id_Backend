@@ -1,5 +1,6 @@
 import requests
 import logging
+from decimal import Decimal, InvalidOperation
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
@@ -53,3 +54,84 @@ class PaymenkuService:
             return response.json()
         except requests.exceptions.RequestException as e:
             return {"status": "error", "message": str(e)}
+
+    @staticmethod
+    def _to_decimal(value):
+        if value is None:
+            return None
+
+        try:
+            return Decimal(str(value))
+        except (InvalidOperation, ValueError, TypeError):
+            return None
+
+    @classmethod
+    def verify_webhook_payload(cls, payload):
+        event = payload.get('event')
+        reference_id = payload.get('reference_id')
+        trx_id = payload.get('trx_id')
+        incoming_status = payload.get('status')
+
+        if event != 'payment.status_updated':
+            return {
+                "verified": False,
+                "reason": "event_not_supported",
+            }
+
+        if not reference_id or not incoming_status:
+            return {
+                "verified": False,
+                "reason": "missing_required_fields",
+            }
+
+        gateway_result = cls.check_status(reference_id)
+        if gateway_result.get('status') != 'success':
+            return {
+                "verified": False,
+                "reason": "gateway_verification_failed",
+                "gateway_result": gateway_result,
+            }
+
+        gateway_data = gateway_result.get('data') or {}
+        gateway_reference_id = gateway_data.get('reference_id')
+        gateway_trx_id = gateway_data.get('trx_id')
+        gateway_status = gateway_data.get('status')
+
+        if gateway_reference_id != reference_id:
+            return {
+                "verified": False,
+                "reason": "reference_id_mismatch",
+                "gateway_result": gateway_result,
+            }
+
+        if gateway_status != incoming_status:
+            return {
+                "verified": False,
+                "reason": "status_mismatch",
+                "gateway_result": gateway_result,
+            }
+
+        if trx_id and gateway_trx_id and trx_id != gateway_trx_id:
+            return {
+                "verified": False,
+                "reason": "trx_id_mismatch",
+                "gateway_result": gateway_result,
+            }
+
+        incoming_amount = cls._to_decimal(payload.get('amount'))
+        gateway_amount_received = cls._to_decimal(gateway_data.get('amount_received'))
+        gateway_amount = cls._to_decimal(gateway_data.get('amount'))
+
+        if incoming_amount is not None:
+            if gateway_amount_received is not None and incoming_amount != gateway_amount_received:
+                if gateway_amount is None or incoming_amount != gateway_amount:
+                    return {
+                        "verified": False,
+                        "reason": "amount_mismatch",
+                        "gateway_result": gateway_result,
+                    }
+
+        return {
+            "verified": True,
+            "gateway_result": gateway_result,
+        }
