@@ -1,15 +1,24 @@
 import os
 from pathlib import Path
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-SECRET_KEY = os.getenv('SECRET_KEY', 'default-unsafe-secret-key')
+def get_required_env(name: str) -> str:
+    value = os.getenv(name)
+    if value:
+        return value
+
+    raise ImproperlyConfigured(f"{name} harus disetel di environment.")
+
+
+SECRET_KEY = get_required_env('SECRET_KEY')
 
 # Paymenku Config
-PAYMENKU_API_KEY = os.getenv('PAYMENKU_API_KEY', '')
+PAYMENKU_API_KEY = get_required_env('PAYMENKU_API_KEY')
 PAYMENKU_BASE_URL = os.getenv('PAYMENKU_BASE_URL', 'https://paymenku.com/api/v1')
 
 # Aplikasi Bawaan Django & Aplikasi Pihak Ketiga
