@@ -6,8 +6,17 @@ from .serializers import MenuSerializer
 
 
 class StaffWritePermission(permissions.BasePermission):
+    """
+    Mengatur izin akses khusus untuk staf atau admin.
+
+    Izin ini memungkinkan akses baca (SAFE_METHODS) untuk semua pengguna, 
+    namun membatasi akses tulis hanya untuk pengguna staf yang terautentikasi.
+    """
 
     def has_permission(self, request, view):
+        """
+        Memeriksa apakah permintaan memiliki hak akses yang sesuai.
+        """
         if request.method in permissions.SAFE_METHODS:
             return True
 
@@ -51,11 +60,23 @@ class StaffWritePermission(permissions.BasePermission):
     ),
 )
 class MenuViewSet(viewsets.ModelViewSet):
+    """
+    Menyediakan layanan operasional untuk katalog menu.
+
+    Mendukung tampilan menu bagi pelanggan serta fitur pengelolaan menu
+    lengkap (CRUD) khusus untuk pihak admin.
+    """
     serializer_class = MenuSerializer
     permission_classes = [StaffWritePermission]
     parser_classes = [JSONParser, FormParser, MultiPartParser]
 
     def get_queryset(self):
+        """
+        Menentukan daftar menu yang dapat diakses pengguna.
+
+        Admin dapat melihat seluruh daftar menu, sementara pelanggan hanya
+        dapat melihat menu yang berstatus tersedia.
+        """
         user = self.request.user
         if user.is_authenticated and user.is_staff:
             return Menu.objects.prefetch_related('images').all()

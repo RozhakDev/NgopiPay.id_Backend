@@ -1,6 +1,12 @@
 from django.db import models
 
 class Menu(models.Model):
+    """
+    Representasi data katalog makanan dan minuman.
+
+    Menyimpan informasi inti mengenai produk seperti nama, harga, deskripsi,
+    hingga status ketersediaan menu untuk dipesan oleh pelanggan.
+    """
     name = models.CharField(
         max_length=100,
         verbose_name="Nama Menu",
@@ -31,19 +37,40 @@ class Menu(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Diperbarui Pada")
 
     class Meta:
+        """
+        Konfigurasi tambahan untuk model Menu.
+        """
         verbose_name = "Menu"
         verbose_name_plural = "Data Menu"
         ordering = ['-is_available', 'name']
 
     def __str__(self):
+        """
+        Memberikan representasi nama menu dan harganya.
+        """
         return f"{self.name} - Rp{self.price}"
 
     @property
     def primary_image(self):
+        """
+        Mengambil objek gambar utama dari galeri menu.
+
+        Returns:
+            MenuImage: Objek gambar pertama berdasarkan urutan sort_order.
+        """
         return self.images.order_by('sort_order', 'id').first()
 
     @property
     def primary_image_url(self):
+        """
+        Menentukan URL gambar terbaik untuk ditampilkan.
+
+        Memprioritaskan gambar dari galeri internal, jika tidak ada maka
+        akan menggunakan URL gambar eksternal (fallback).
+
+        Returns:
+            str: URL gambar yang dapat diakses.
+        """
         primary_image = self.primary_image
         if primary_image and primary_image.image:
             return primary_image.image.url
@@ -52,6 +79,12 @@ class Menu(models.Model):
 
 
 class MenuImage(models.Model):
+    """
+    Menyimpan galeri gambar pendukung untuk setiap menu.
+
+    Memungkinkan satu menu memiliki banyak gambar dengan urutan tampilan
+    yang dapat diatur secara manual.
+    """
     menu = models.ForeignKey(
         Menu,
         related_name='images',
@@ -79,9 +112,15 @@ class MenuImage(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Dibuat Pada")
 
     class Meta:
+        """
+        Konfigurasi tambahan untuk model Gambar Menu.
+        """
         verbose_name = "Gambar Menu"
         verbose_name_plural = "Gambar Menu"
         ordering = ['sort_order', 'created_at']
 
     def __str__(self):
+        """
+        Memberikan representasi menu dan urutan gambarnya.
+        """
         return f"{self.menu.name} - #{self.sort_order}"

@@ -3,6 +3,12 @@ from django.db import models
 from menus.models import Menu
 
 class Order(models.Model):
+    """
+    Induk data pesanan yang dibuat oleh pelanggan.
+
+    Menyimpan identitas pelanggan, nomor meja, total harga, serta status                                    │
+    pesanan yang mencerminkan progres pelayanan dari dapur hingga selesai.                                  │
+    """
     STATUS_CHOICES = [
         ('pending_payment', 'Menunggu Pembayaran'),
         ('paid', 'Sudah Dibayar'),
@@ -51,15 +57,27 @@ class Order(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Diperbarui Pada")
 
     class Meta:
+        """
+        Konfigurasi tambahan untuk model Pesanan.
+        """
         verbose_name = "Pesanan"
         verbose_name_plural = "Data Pesanan"
         ordering = ['-created_at']
 
     def __str__(self):
+        """
+        Memberikan representasi kode referensi dan identitas pelanggan.
+        """
         return f"[{self.reference_id}] Meja {self.table_number} - {self.customer_name}"
 
 
 class OrderItem(models.Model):
+    """
+    Detail rincian menu yang dipesan dalam satu transaksi.
+
+    Mencatat menu apa saja yang dibeli, jumlah porsi, serta harga snapshot
+    saat pesanan tersebut dibuat untuk menjaga konsistensi data keuangan.
+    """
     order = models.ForeignKey(
         Order,
         related_name='items',
@@ -89,6 +107,9 @@ class OrderItem(models.Model):
     )
 
     class Meta:
+        """
+        Konfigurasi tambahan untuk model Item Pesanan.
+        """
         verbose_name = "Item Pesanan"
         verbose_name_plural = "Detail Item Pesanan"
 
@@ -97,4 +118,7 @@ class OrderItem(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
+        """
+        Memberikan representasi jumlah dan nama menu yang dipesan.
+        """
         return f"{self.quantity}x {self.menu.name} (Pesanan: {self.order.reference_id})"

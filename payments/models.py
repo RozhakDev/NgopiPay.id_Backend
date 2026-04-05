@@ -2,6 +2,12 @@ from django.db import models
 from orders.models import Order
 
 class Payment(models.Model):
+    """
+    Menyimpan informasi lengkap mengenai transaksi pembayaran.
+
+    Model ini mencatat status pembayaran, nominal tagihan, hingga tautan
+    pembayaran yang dihasilkan oleh gateway Paymenku.
+    """
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('paid', 'Berhasil'),
@@ -65,9 +71,15 @@ class Payment(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Diperbarui Pada")
 
     class Meta:
+        """
+        Konfigurasi tambahan untuk model Pembayaran.
+        """
         verbose_name = "Pembayaran"
         verbose_name_plural = "Data Pembayaran"
         ordering = ['-created_at']
 
     def __str__(self):
+        """
+        Memberikan representasi kode referensi dan status pembayaran.
+        """
         return f"Pay: {self.reference_id} - {self.get_status_display()}"

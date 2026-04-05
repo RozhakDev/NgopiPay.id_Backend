@@ -5,6 +5,12 @@ from .models import Menu, MenuImage
 
 
 class MenuImageSerializer(serializers.ModelSerializer):
+    """
+    Mengubah data gambar menu menjadi format JSON yang informatif.
+
+    Serializer ini menangani detail teknis gambar seperti URL absolut
+    dan urutan tampilan gambar dalam katalog.
+    """
     image_url = serializers.SerializerMethodField()
 
     class Meta:
@@ -14,6 +20,12 @@ class MenuImageSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(serializers.URLField())
     def get_image_url(self, obj):
+        """
+        Menghasilkan URL lengkap untuk file gambar.
+
+        Returns:
+            str: URL absolut gambar jika tersedia, atau None jika tidak ada.
+        """
         if not obj.image:
             return None
 
@@ -22,6 +34,12 @@ class MenuImageSerializer(serializers.ModelSerializer):
         return request.build_absolute_uri(image_url) if request else image_url
 
 class MenuSerializer(serializers.ModelSerializer):
+    """
+    Mengelola konversi data menu dan proses unggah gambar sekaligus.
+
+    Serializer ini mendukung pembuatan menu baru beserta beberapa gambar
+    pendukung dalam satu transaksi yang aman.
+    """
     name = serializers.CharField(help_text="Nama menu makanan atau minuman")
     price = serializers.IntegerField(help_text="Harga dalam Rupiah (IDR)")
     description = serializers.CharField(required=False, allow_blank=True, help_text="Deskripsi singkat mengenai menu")
@@ -55,6 +73,12 @@ class MenuSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(serializers.URLField())
     def get_primary_image_url(self, obj):
+        """
+        Menentukan URL gambar utama untuk tampilan katalog.
+
+        Memprioritaskan gambar yang diunggah ke galeri, atau menggunakan
+        URL gambar eksternal sebagai cadangan.
+        """
         primary_image_url = obj.primary_image_url
         if not primary_image_url:
             return None
@@ -64,6 +88,9 @@ class MenuSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def _create_menu_images(menu, uploaded_images):
+        """
+        Menyimpan daftar file gambar ke dalam galeri menu.
+        """
         for index, image_file in enumerate(uploaded_images):
             MenuImage.objects.create(
                 menu=menu,
@@ -73,6 +100,9 @@ class MenuSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
+        """
+        Membuat record menu baru beserta galerinya.
+        """
         uploaded_images = validated_data.pop('uploaded_images', [])
         menu = super().create(validated_data)
         if uploaded_images:
@@ -81,6 +111,9 @@ class MenuSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def update(self, instance, validated_data):
+        """
+        Memperbarui informasi menu dan menambahkan gambar baru jika ada.
+        """
         uploaded_images = validated_data.pop('uploaded_images', [])
         menu = super().update(instance, validated_data)
         if uploaded_images:

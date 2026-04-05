@@ -13,6 +13,12 @@ from orders.utils import verify_order_access_token
 logger = logging.getLogger(__name__)
 
 class PaymenkuWebhookView(APIView):
+    """
+    Menangani notifikasi otomatis dari Payment Gateway Paymenku.
+
+    Endpoint ini menerima data status pembayaran terkini dan melakukan
+    pembaruan otomatis pada record pesanan yang terkait.
+    """
     permission_classes = [permissions.AllowAny]
 
     @extend_schema(
@@ -23,6 +29,9 @@ class PaymenkuWebhookView(APIView):
         tags=["Pembayaran"]
     )
     def post(self, request, *args, **kwargs):
+        """
+        Memproses data notifikasi pembayaran yang masuk.
+        """
         payload = request.data
         logger.info(
             "Webhook Paymenku diterima. reference_id=%s, status=%s, event=%s",
@@ -131,6 +140,12 @@ class PaymenkuWebhookView(APIView):
 
 
 class CheckPaymentStatusView(APIView):
+    """
+    Menyediakan fitur pengecekan status pembayaran secara manual.
+
+    Membantu sinkronisasi status antara sistem internal dan payment gateway
+    apabila terjadi keterlambatan pada notifikasi webhook.
+    """
     permission_classes = [permissions.AllowAny]
 
     @extend_schema(
@@ -144,6 +159,9 @@ class CheckPaymentStatusView(APIView):
         tags=["Pembayaran"]
     )
     def get(self, request, reference_id, *args, **kwargs):
+        """
+        Melakukan sinkronisasi status ke server Paymenku.
+        """
         token = request.query_params.get('token') or request.headers.get('X-Order-Token')
         logger.info(
             "Pengecekan status pembayaran dimulai. reference_id=%s",

@@ -9,6 +9,21 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 def get_required_env(name: str) -> str:
+    """
+    Mengambil nilai variabel lingkungan yang wajib tersedia.
+
+    Fungsi ini memastikan bahwa konfigurasi penting telah didefinisikan
+    dalam environment aplikasi sebelum sistem dijalankan.
+
+    Args:
+        name (str): Nama variabel lingkungan yang ingin diambil.
+
+    Returns:
+        str: Nilai dari variabel lingkungan tersebut.
+
+    Raises:
+        ImproperlyConfigured: Jika variabel lingkungan tidak ditemukan.
+    """
     value = os.getenv(name)
     if value:
         return value

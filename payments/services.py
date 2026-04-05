@@ -6,11 +6,20 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 class PaymenkuService:
+    """
+    Layanan integrasi dengan Payment Gateway Paymenku.
+
+    Menangani seluruh komunikasi keluar menuju API Paymenku, termasuk
+    pembuatan transaksi, pengecekan status, dan validasi webhook.
+    """
     BASE_URL = getattr(settings, 'PAYMENKU_BASE_URL', 'https://paymenku.com/api/v1')
     API_KEY = getattr(settings, 'PAYMENKU_API_KEY', '')
 
     @classmethod
     def get_headers(cls):
+        """
+        Menyediakan header autentikasi untuk permintaan API.
+        """
         return {
             "Authorization": f"Bearer {cls.API_KEY}",
             "Content-Type": "application/json"
@@ -18,6 +27,20 @@ class PaymenkuService:
     
     @classmethod
     def create_transaction(cls, reference_id, amount, customer_name):
+        """
+        Mendaftarkan transaksi baru ke sistem Paymenku.
+
+        Fungsi ini akan mengirim data pesanan dan mengharapkan balasan
+        berupa ID transaksi (trx_id) dan URL pembayaran (pay_url).
+
+        Args:
+            reference_id (str): ID referensi unik pesanan.
+            amount (int): Total nominal yang harus dibayar.
+            customer_name (str): Nama pelanggan pembayar.
+
+        Returns:
+            dict: Hasil transaksi yang memuat status sukses dan data terkait.
+        """
         url = f"{cls.BASE_URL}/transaction/create"
         logger.info(
             "Memulai pembuatan transaksi pembayaran. reference_id=%s, amount=%s, customer_name=%s",
@@ -66,6 +89,18 @@ class PaymenkuService:
     
     @classmethod
     def check_status(cls, reference_id):
+        """
+        Memeriksa status terkini transaksi di sistem Paymenku.
+
+        Digunakan sebagai mekanisme fallback atau sinkronisasi manual
+        jika notifikasi otomatis (webhook) tidak diterima.
+
+        Args:
+            reference_id (str): ID referensi pesanan yang ingin diperiksa.
+
+        Returns:
+            dict: Data status transaksi langsung dari gateway.
+        """
         url = f"{cls.BASE_URL}/check-status/{reference_id}"
         try:
             response = requests.get(url, headers=cls.get_headers(), timeout=60)
@@ -79,6 +114,12 @@ class PaymenkuService:
 
     @staticmethod
     def format_safe_status_response(reference_id, gateway_result):
+        """
+        Menyederhanakan data dari gateway untuk dikonsumsi oleh klien.
+
+        Menghilangkan informasi teknis yang tidak perlu dan menyajikan
+        data dalam struktur yang konsisten.
+        """
         if gateway_result.get('status') != 'success':
             return {
                 "status": "error",
@@ -109,6 +150,9 @@ class PaymenkuService:
 
     @staticmethod
     def _to_decimal(value):
+        """
+        Mengonversi nilai ke tipe Decimal secara aman.
+        """
         if value is None:
             return None
 
@@ -119,6 +163,18 @@ class PaymenkuService:
 
     @classmethod
     def verify_webhook_payload(cls, payload):
+        """
+        Memvalidasi keaslian data yang dikirim melalui webhook.
+
+        Melakukan verifikasi ganda ke API Paymenku untuk memastikan bahwa
+        notifikasi pembayaran memang benar dan nominalnya sesuai.
+
+        Args:
+            payload (dict): Data webhook yang diterima dari Paymenku.
+
+        Returns:
+            dict: Hasil verifikasi yang memuat status keabsahan data.
+        """
         event = payload.get('event')
         reference_id = payload.get('reference_id')
         trx_id = payload.get('trx_id')

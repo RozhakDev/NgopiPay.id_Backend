@@ -9,10 +9,25 @@ from .logging_context import (
 logger = logging.getLogger(__name__)
 
 class RequestContextMiddleware:
+    """
+    Middleware untuk mengelola konteks setiap permintaan HTTP.
+
+    Menyediakan identitas unik (Request ID) dan informasi pengguna untuk
+    setiap permintaan guna keperluan pelacakan log yang lebih baik.
+    """
     def __init__(self, get_response):
+        """
+        Inisialisasi middleware dengan fungsi get_response Django.
+        """
         self.get_response = get_response
 
     def __call__(self, request):
+        """
+        Memproses siklus hidup setiap permintaan dan respons.
+
+        Mencatat waktu eksekusi, mengatur konteks log, dan memastikan pembersihan
+        konteks setelah permintaan selesai diproses.
+        """
         request_id = request.headers.get("X-Request-ID") or generate_request_id()
         user = "-"
         if hasattr(request, "user") and request.user.is_authenticated:

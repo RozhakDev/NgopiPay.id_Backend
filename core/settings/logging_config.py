@@ -1,6 +1,18 @@
 from pathlib import Path
 
 def build_logging_config(base_dir: Path) -> dict:
+    """
+    Membangun konfigurasi logging aplikasi yang terstruktur.
+
+    Fungsi ini menyiapkan direktori log dan mendefinisikan format, filter, serta
+    handler untuk mencatat aktivitas sistem ke konsol dan file secara terpisah.
+
+    Args:
+        base_dir (Path): Jalur direktori utama proyek.
+
+    Returns:
+        dict: Dictionary konfigurasi logging yang kompatibel dengan standar Django.
+    """
     log_dir = base_dir / "logs"
     log_dir.mkdir(exist_ok=True)
 

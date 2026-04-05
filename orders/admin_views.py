@@ -29,9 +29,18 @@ from .serializers import OrderReadSerializer, AdminOrderUpdateSerializer
     ),
 )
 class AdminOrderViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):
+    """
+    Pusat kendali pesanan untuk pihak internal (Kasir/Dapur).
+
+    Menyediakan fitur untuk memantau pesanan yang masuk, melihat detail
+    pesanan, serta memperbarui status proses (cooking, done).
+    """
     permission_classes = [permissions.IsAdminUser]
 
     def get_queryset(self):
+        """
+        Menyaring data pesanan berdasarkan filter status jika tersedia.
+        """
         queryset = Order.objects.prefetch_related('items__menu').order_by('created_at')
 
         status_param = self.request.query_params.get('status')
@@ -42,6 +51,9 @@ class AdminOrderViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins
         return queryset
     
     def get_serializer_class(self):
+        """
+        Menentukan serializer yang tepat untuk pembacaan atau pembaruan status.
+        """
         if self.action in ['update', 'partial_update']:
             return AdminOrderUpdateSerializer
         

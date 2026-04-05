@@ -12,6 +12,12 @@ from orders.models import Order
 logger = logging.getLogger(__name__)
 
 class SalesReportView(APIView):
+    """
+    Menghasilkan laporan ringkasan penjualan untuk Admin.
+
+    Menyediakan data statistik berupa total pendapatan dan jumlah pesanan
+    berdasarkan periode waktu yang dipilih (harian, mingguan, bulanan).
+    """
     permission_classes = [permissions.IsAdminUser]
 
     @extend_schema(
@@ -24,6 +30,9 @@ class SalesReportView(APIView):
         tags=["Admin - Laporan"]
     )
     def get(self, request, *args, **kwargs):
+        """
+        Mengambil data agregasi penjualan berdasarkan periode.
+        """
         period = request.query_params.get('period', 'daily')
         now = timezone.now()
 

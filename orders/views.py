@@ -12,12 +12,21 @@ logger = logging.getLogger(__name__)
 
 
 class OrderAccessPermission(permissions.BasePermission):
+    """
+    Mengontrol hak akses pelanggan terhadap data pesanan.
+
+    Memastikan pelanggan hanya dapat melihat pesanan milik sendiri
+    menggunakan validasi token akses yang dikirim klien.
+    """
     message = "Token akses order tidak valid."
 
     def has_permission(self, request, view):
         return True
 
     def has_object_permission(self, request, view, obj):
+        """
+        Memvalidasi kepemilikan objek pesanan berdasarkan token.
+        """
         if view.action == 'create':
             return True
 
@@ -56,10 +65,19 @@ class OrderAccessPermission(permissions.BasePermission):
     ),
 )
 class OrderViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+    """
+    Mengelola siklus hidup pesanan dari sisi pelanggan.
+
+    Menangani pembuatan pesanan baru (checkout), pengecekan status,
+    hingga pengambilan data struk setelah pembayaran berhasil.
+    """
     queryset = Order.objects.all()
     permission_classes = [OrderAccessPermission]
 
     def get_serializer_class(self):
+        """
+        Menentukan serializer berdasarkan aksi yang dilakukan.
+        """
         if self.action == 'create':
             return OrderCreateSerializer
         return OrderReadSerializer
@@ -75,6 +93,9 @@ class OrderViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.
     )
     @action(detail=True, methods=['get'])
     def receipt(self, request, pk=None):
+        """
+        Menyediakan data struk untuk pesanan yang telah lunas.
+        """
         order = self.get_object()
 
         if order.status == 'pending_payment':
