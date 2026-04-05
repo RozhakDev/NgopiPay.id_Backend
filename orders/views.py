@@ -2,6 +2,8 @@ import logging
 from rest_framework import viewsets, mixins, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
 from .models import Order
 from .serializers import OrderCreateSerializer, OrderReadSerializer
 from .utils import verify_order_access_token
@@ -38,6 +40,21 @@ class OrderAccessPermission(permissions.BasePermission):
             )
         return is_valid
 
+@extend_schema_view(
+    create=extend_schema(
+        summary="Buat Pesanan Baru",
+        description="Melakukan checkout pesanan. Mengembalikan URL pembayaran Paymenku.",
+        tags=["Pesanan"]
+    ),
+    retrieve=extend_schema(
+        summary="Cek Status Pesanan",
+        description="Melihat status pesanan pelanggan. Memerlukan Token Akses (token) di query params atau header X-Order-Token.",
+        parameters=[
+            OpenApiParameter("token", type=str, location=OpenApiParameter.QUERY, description="Token akses pesanan yang didapat saat checkout"),
+        ],
+        tags=["Pesanan"]
+    ),
+)
 class OrderViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     queryset = Order.objects.all()
     permission_classes = [OrderAccessPermission]
@@ -47,6 +64,15 @@ class OrderViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.
             return OrderCreateSerializer
         return OrderReadSerializer
     
+    @extend_schema(
+        summary="Dapatkan Struk Pesanan",
+        description="Menghasilkan data struk digital untuk pesanan yang sudah dibayar.",
+        parameters=[
+            OpenApiParameter("token", type=str, location=OpenApiParameter.QUERY, description="Token akses pesanan"),
+        ],
+        responses={200: OpenApiTypes.OBJECT},
+        tags=["Pesanan"]
+    )
     @action(detail=True, methods=['get'])
     def receipt(self, request, pk=None):
         order = self.get_object()

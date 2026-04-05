@@ -1,6 +1,7 @@
 import logging
 from rest_framework import serializers
 from django.db import transaction
+from drf_spectacular.utils import extend_schema_field
 from .models import Order, OrderItem
 from menus.models import Menu
 from payments.models import Payment
@@ -11,7 +12,7 @@ from .utils import generate_reference_id, generate_order_access_token
 logger = logging.getLogger(__name__)
 
 class OrderItemReadSerializer(serializers.ModelSerializer):
-    menu_name = serializers.CharField(source='menu.name', read_only=True)
+    menu_name = serializers.CharField(source='menu.name', read_only=True, help_text="Nama menu")
 
     class Meta:
         model = OrderItem
@@ -19,19 +20,21 @@ class OrderItemReadSerializer(serializers.ModelSerializer):
 
 
 class OrderReadSerializer(serializers.ModelSerializer):
-    items = OrderItemReadSerializer(many=True, read_only=True)
-    pay_url = serializers.SerializerMethodField()
-    access_token = serializers.SerializerMethodField()
+    items = OrderItemReadSerializer(many=True, read_only=True, help_text="Daftar item yang dipesan")
+    pay_url = serializers.SerializerMethodField(help_text="URL halaman pembayaran (Paymenku)")
+    access_token = serializers.SerializerMethodField(help_text="Token unik untuk akses detail pesanan tanpa login")
 
     class Meta:
         model = Order
         fields = ['id', 'reference_id', 'customer_name', 'table_number', 'status', 'total_price', 'pay_url', 'access_token', 'items', 'created_at']
 
+    @extend_schema_field(serializers.URLField(allow_null=True))
     def get_pay_url(self, obj):
         if hasattr(obj, 'payment') and obj.payment.pay_url:
             return obj.payment.pay_url
         return None
 
+    @extend_schema_field(serializers.CharField())
     def get_access_token(self, obj):
         return generate_order_access_token(obj)
     
@@ -39,14 +42,15 @@ class OrderReadSerializer(serializers.ModelSerializer):
 class OrderItemCreateSerializer(serializers.Serializer):
     menu_id = serializers.PrimaryKeyRelatedField(
         queryset=Menu.objects.filter(is_available=True), 
-        source='menu'
+        source='menu',
+        help_text="ID menu yang dipesan"
     )
-    quantity = serializers.IntegerField(min_value=1)
+    quantity = serializers.IntegerField(min_value=1, help_text="Jumlah porsi")
 
 class OrderCreateSerializer(serializers.Serializer):
-    customer_name = serializers.CharField(max_length=100)
-    table_number = serializers.IntegerField(min_value=1)
-    items = OrderItemCreateSerializer(many=True, allow_empty=False)
+    customer_name = serializers.CharField(max_length=100, help_text="Nama lengkap pelanggan")
+    table_number = serializers.IntegerField(min_value=1, help_text="Nomor meja tempat duduk")
+    items = OrderItemCreateSerializer(many=True, allow_empty=False, help_text="Daftar menu yang ingin dipesan")
 
     @transaction.atomic
     def create(self, validated_data):

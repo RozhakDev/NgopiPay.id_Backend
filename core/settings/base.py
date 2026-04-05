@@ -15,7 +15,6 @@ def get_required_env(name: str) -> str:
 
     raise ImproperlyConfigured(f"{name} harus disetel di environment.")
 
-
 SECRET_KEY = get_required_env('SECRET_KEY')
 
 # Paymenku Config
@@ -115,10 +114,26 @@ REST_FRAMEWORK = {
 # Konfigurasi Dokumentasi Swagger
 SPECTACULAR_SETTINGS = {
     'TITLE': 'NgopiPay.id API',
-    'DESCRIPTION': 'Dokumentasi resmi API untuk sistem pemesanan QRIS NgopiPay.id',
+    'DESCRIPTION': (
+        'Dokumentasi resmi API NgopiPay.id. '
+        'Sistem pemesanan makanan/minuman berbasis QR Code yang terintegrasi dengan Payment Gateway Paymenku. '
+        'Memungkinkan pelanggan memesan dari meja tanpa login dan admin memproses pesanan melalui dashboard.'
+    ),
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
     'COMPONENT_SPLIT_REQUEST': True,
+    'CONTACT': {
+        'name': 'Tim Pengembang NgopiPay.id',
+        'url': 'https://www.ngopipay.my.id',
+        'email': 'support@ngopipay.my.id',
+    },
+    'TAGS': [
+        {'name': 'Menu', 'description': 'Manajemen katalog makanan dan minuman'},
+        {'name': 'Pesanan', 'description': 'Proses pemesanan, checkout, dan status pesanan pelanggan'},
+        {'name': 'Pembayaran', 'description': 'Integrasi payment gateway dan pengecekan status transaksi'},
+        {'name': 'Admin - Pesanan', 'description': 'Manajemen operasional pesanan untuk kasir/dapur'},
+        {'name': 'Admin - Laporan', 'description': 'Laporan penjualan dan statistik bisnis'},
+    ],
 }
 
 LOGGING = build_logging_config(BASE_DIR)

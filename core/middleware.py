@@ -1,6 +1,5 @@
 import logging
 import time
-
 from .logging_context import (
     clear_request_context,
     generate_request_id,
@@ -8,7 +7,6 @@ from .logging_context import (
 )
 
 logger = logging.getLogger(__name__)
-
 
 class RequestContextMiddleware:
     def __init__(self, get_response):

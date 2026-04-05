@@ -1,5 +1,6 @@
 from rest_framework import viewsets, permissions
 from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from .models import Menu
 from .serializers import MenuSerializer
 
@@ -14,6 +15,38 @@ class StaffWritePermission(permissions.BasePermission):
         return bool(user and user.is_authenticated and user.is_staff)
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="Daftar Katalog Menu",
+        description="Menampilkan semua menu yang tersedia untuk pelanggan. Admin akan melihat semua menu termasuk yang tidak tersedia.",
+        tags=["Menu"]
+    ),
+    retrieve=extend_schema(
+        summary="Detail Menu",
+        description="Melihat informasi mendalam tentang satu menu tertentu berdasarkan ID.",
+        tags=["Menu"]
+    ),
+    create=extend_schema(
+        summary="Tambah Menu Baru (Admin)",
+        description="Menambahkan menu baru ke katalog. Memerlukan otentikasi staff.",
+        tags=["Menu"]
+    ),
+    update=extend_schema(
+        summary="Ubah Menu (Admin)",
+        description="Memperbarui seluruh informasi menu. Memerlukan otentikasi staff.",
+        tags=["Menu"]
+    ),
+    partial_update=extend_schema(
+        summary="Ubah Menu Sebagian (Admin)",
+        description="Memperbarui beberapa field menu saja. Memerlukan otentikasi staff.",
+        tags=["Menu"]
+    ),
+    destroy=extend_schema(
+        summary="Hapus Menu (Admin)",
+        description="Menghapus menu dari katalog secara permanen. Memerlukan otentikasi staff.",
+        tags=["Menu"]
+    ),
+)
 class MenuViewSet(viewsets.ModelViewSet):
     serializer_class = MenuSerializer
     permission_classes = [StaffWritePermission]

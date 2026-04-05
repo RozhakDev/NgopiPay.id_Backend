@@ -5,6 +5,8 @@ from rest_framework import permissions
 from django.db.models import Sum, Count
 from django.utils import timezone
 from datetime import timedelta
+from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
 from orders.models import Order
 
 logger = logging.getLogger(__name__)
@@ -12,6 +14,15 @@ logger = logging.getLogger(__name__)
 class SalesReportView(APIView):
     permission_classes = [permissions.IsAdminUser]
 
+    @extend_schema(
+        summary="Laporan Penjualan (Admin)",
+        description="Melihat ringkasan total pendapatan dan jumlah pesanan dalam periode tertentu.",
+        parameters=[
+            OpenApiParameter("period", type=str, description="Periode laporan: daily, weekly, monthly. Default: daily."),
+        ],
+        responses={200: OpenApiTypes.OBJECT},
+        tags=["Admin - Laporan"]
+    )
     def get(self, request, *args, **kwargs):
         period = request.query_params.get('period', 'daily')
         now = timezone.now()

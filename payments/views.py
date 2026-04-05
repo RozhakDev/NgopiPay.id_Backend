@@ -4,6 +4,8 @@ from rest_framework.response import Response
 from rest_framework import permissions, status
 from django.utils import timezone
 from django.db import transaction
+from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
 from .models import Payment
 from .services import PaymenkuService
 from orders.utils import verify_order_access_token
@@ -13,6 +15,13 @@ logger = logging.getLogger(__name__)
 class PaymenkuWebhookView(APIView):
     permission_classes = [permissions.AllowAny]
 
+    @extend_schema(
+        summary="Webhook Notifikasi Pembayaran (Paymenku)",
+        description="Endpoint publik untuk menerima notifikasi otomatis dari Paymenku saat status transaksi berubah.",
+        request=OpenApiTypes.OBJECT,
+        responses={200: OpenApiTypes.OBJECT},
+        tags=["Pembayaran"]
+    )
     def post(self, request, *args, **kwargs):
         payload = request.data
         logger.info(
@@ -124,6 +133,16 @@ class PaymenkuWebhookView(APIView):
 class CheckPaymentStatusView(APIView):
     permission_classes = [permissions.AllowAny]
 
+    @extend_schema(
+        summary="Cek Status Pembayaran (Manual Check)",
+        description="Melakukan sinkronisasi status pembayaran langsung ke API Paymenku sebagai fallback jika webhook terlambat.",
+        parameters=[
+            OpenApiParameter("reference_id", type=str, location=OpenApiParameter.PATH, description="Reference ID internal"),
+            OpenApiParameter("token", type=str, location=OpenApiParameter.QUERY, description="Token akses pesanan"),
+        ],
+        responses={200: OpenApiTypes.OBJECT},
+        tags=["Pembayaran"]
+    )
     def get(self, request, reference_id, *args, **kwargs):
         token = request.query_params.get('token') or request.headers.get('X-Order-Token')
         logger.info(

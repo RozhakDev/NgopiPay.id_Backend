@@ -1,7 +1,33 @@
 from rest_framework import viewsets, permissions, mixins
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
 from .models import Order
 from .serializers import OrderReadSerializer, AdminOrderUpdateSerializer
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="Daftar Pesanan (Admin)",
+        description="Melihat semua pesanan masuk. Bisa difilter berdasarkan status (comma-separated).",
+        parameters=[
+            OpenApiParameter("status", type=str, description="Filter status (contoh: paid,cooking)"),
+        ],
+        tags=["Admin - Pesanan"]
+    ),
+    retrieve=extend_schema(
+        summary="Detail Pesanan (Admin)",
+        description="Melihat detail item dan informasi pelanggan dalam satu pesanan.",
+        tags=["Admin - Pesanan"]
+    ),
+    update=extend_schema(
+        summary="Update Status Pesanan (Admin)",
+        description="Memperbarui status pesanan (contoh: dari paid ke cooking).",
+        tags=["Admin - Pesanan"]
+    ),
+    partial_update=extend_schema(
+        summary="Update Status Pesanan Sebagian (Admin)",
+        description="Memperbarui status pesanan secara parsial.",
+        tags=["Admin - Pesanan"]
+    ),
+)
 class AdminOrderViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):
     permission_classes = [permissions.IsAdminUser]
 

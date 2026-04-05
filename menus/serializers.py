@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.db import transaction
+from drf_spectacular.utils import extend_schema_field
 from .models import Menu, MenuImage
 
 
@@ -11,6 +12,7 @@ class MenuImageSerializer(serializers.ModelSerializer):
         fields = ['id', 'image_url', 'alt_text', 'sort_order', 'created_at']
         read_only_fields = ['id', 'image_url', 'created_at']
 
+    @extend_schema_field(serializers.URLField())
     def get_image_url(self, obj):
         if not obj.image:
             return None
@@ -20,14 +22,20 @@ class MenuImageSerializer(serializers.ModelSerializer):
         return request.build_absolute_uri(image_url) if request else image_url
 
 class MenuSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(help_text="Nama menu makanan atau minuman")
+    price = serializers.IntegerField(help_text="Harga dalam Rupiah (IDR)")
+    description = serializers.CharField(required=False, allow_blank=True, help_text="Deskripsi singkat mengenai menu")
+    is_available = serializers.BooleanField(default=True, help_text="Status ketersediaan menu untuk dipesan")
+    
     images = MenuImageSerializer(many=True, read_only=True)
     uploaded_images = serializers.ListField(
         child=serializers.ImageField(),
         write_only=True,
         required=False,
         allow_empty=False,
+        help_text="Daftar file gambar yang akan diunggah (mendukung banyak file)"
     )
-    primary_image_url = serializers.SerializerMethodField()
+    primary_image_url = serializers.SerializerMethodField(help_text="URL gambar utama untuk ditampilkan di katalog")
 
     class Meta:
         model = Menu
@@ -45,6 +53,7 @@ class MenuSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'updated_at', 'primary_image_url', 'images']
 
+    @extend_schema_field(serializers.URLField())
     def get_primary_image_url(self, obj):
         primary_image_url = obj.primary_image_url
         if not primary_image_url:

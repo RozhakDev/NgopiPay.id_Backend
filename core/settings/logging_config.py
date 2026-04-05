@@ -1,6 +1,5 @@
 from pathlib import Path
 
-
 def build_logging_config(base_dir: Path) -> dict:
     log_dir = base_dir / "logs"
     log_dir.mkdir(exist_ok=True)
