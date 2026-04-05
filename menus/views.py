@@ -28,17 +28,20 @@ class StaffWritePermission(permissions.BasePermission):
     ),
     create=extend_schema(
         summary="Tambah Menu Baru (Admin)",
-        description="Menambahkan menu baru ke katalog. Memerlukan otentikasi staff.",
+        description="Menambahkan menu baru ke katalog. Gunakan format **multipart/form-data** untuk mengunggah gambar.",
+        request=MenuSerializer,
         tags=["Menu"]
     ),
     update=extend_schema(
         summary="Ubah Menu (Admin)",
-        description="Memperbarui seluruh informasi menu. Memerlukan otentikasi staff.",
+        description="Memperbarui seluruh informasi menu termasuk unggah gambar baru.",
+        request=MenuSerializer,
         tags=["Menu"]
     ),
     partial_update=extend_schema(
         summary="Ubah Menu Sebagian (Admin)",
-        description="Memperbarui beberapa field menu saja. Memerlukan otentikasi staff.",
+        description="Memperbarui beberapa field menu atau menambah gambar.",
+        request=MenuSerializer,
         tags=["Menu"]
     ),
     destroy=extend_schema(
